@@ -8,7 +8,13 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   typedRoutes: true,
   images: {
-    remotePatterns: [{ protocol: 'https', hostname: 'picsum.photos' }],
+    remotePatterns: [
+      { protocol: 'https', hostname: 'picsum.photos' },
+      {
+        protocol: 'https',
+        hostname: 'avatars.githubusercontent.com',
+      },
+    ],
   },
 };
 

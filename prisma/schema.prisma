@@ -8,11 +8,80 @@ datasource db {
 }
 
 // -----------------------------------------------------------------------------
-// APP CORE: MONITORING & BRAIN
+// USER & AUTHENTICATION
 // -----------------------------------------------------------------------------
 
-// Matches 'BrainItem' in src/types.ts
-// Used in src/app/(dashboard)/brain/page.tsx
+model User {
+  id            String        @id
+  name          String
+  email         String
+  emailVerified Boolean       @default(false)
+  image         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  brainItems    BrainItem[]
+  monitors      Monitor[]
+  subscription  Subscription?
+  settings      Settings?
+  integrations  Integration[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// -----------------------------------------------------------------------------
+// APP CORE: MONITORING & BRAIN
+// -----------------------------------------------------------------------------
 model BrainItem {
   id          String  @id @default(cuid())
   title       String
@@ -26,12 +95,13 @@ model BrainItem {
   // Postgres supports native scalar lists for tags
   tags String[]
 
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-// Matches 'ScheduledTask' in src/types.ts
-// Used in src/app/(dashboard)/queue/page.tsx
 model Monitor {
   id   String @id @default(cuid())
   name String
@@ -39,10 +109,9 @@ model Monitor {
   // Enums mapped from types.ts: 'uptime' | 'report' | 'performance'
   type MonitorType
 
-  // Config fields inferred from src/app/(dashboard)/composer/page.tsx
   url       String?
   method    String  @default("GET")
-  frequency String  @default("5 min") // e.g. "1 min", "5 min"
+  frequency String  @default("5 min")
 
   // Status tracking
   status  MonitorStatus @default(ACTIVE)
@@ -51,8 +120,11 @@ model Monitor {
 
   // Relations
   incidents   Incident[]
-  latencyLogs LatencyLog[] // For charts in Overview
-  uptimeLogs  UptimeLog[] // For uptime bars
+  latencyLogs LatencyLog[]
+  uptimeLogs  UptimeLog[]
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -82,7 +154,6 @@ model UptimeLog {
 
 // -----------------------------------------------------------------------------
 // INCIDENT MANAGEMENT (AI Features)
-// Support for src/lib/gemini.ts
 // -----------------------------------------------------------------------------
 
 model Incident {
@@ -107,7 +178,9 @@ model Incident {
 // -----------------------------------------------------------------------------
 
 model Subscription {
-  id String @id @default(cuid())
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   plan   PlanType @default(HOBBY)
   status String // e.g., 'active', 'past_due'
@@ -141,7 +214,9 @@ model Invoice {
 // -----------------------------------------------------------------------------
 
 model Settings {
-  id String @id @default(cuid())
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Preferences
   theme String @default("system")
@@ -158,6 +233,9 @@ model Integration {
   type      IntegrationType // DATADOG, SLACK
   config    Json? // Store API keys/webhooks (encrypted ideally)
   isEnabled Boolean         @default(false)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // -----------------------------------------------------------------------------
