@@ -1,0 +1,209 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// -----------------------------------------------------------------------------
+// APP CORE: MONITORING & BRAIN
+// -----------------------------------------------------------------------------
+
+// Matches 'BrainItem' in src/types.ts
+// Used in src/app/(dashboard)/brain/page.tsx
+model BrainItem {
+  id          String  @id @default(cuid())
+  title       String
+  description String? @db.Text
+  url         String?
+  favicon     String?
+
+  // Enums mapped from types.ts: 'website' | 'api' | 'doc' | 'log'
+  type BrainType
+
+  // Postgres supports native scalar lists for tags
+  tags String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Matches 'ScheduledTask' in src/types.ts
+// Used in src/app/(dashboard)/queue/page.tsx
+model Monitor {
+  id   String @id @default(cuid())
+  name String
+
+  // Enums mapped from types.ts: 'uptime' | 'report' | 'performance'
+  type MonitorType
+
+  // Config fields inferred from src/app/(dashboard)/composer/page.tsx
+  url       String?
+  method    String  @default("GET")
+  frequency String  @default("5 min") // e.g. "1 min", "5 min"
+
+  // Status tracking
+  status  MonitorStatus @default(ACTIVE)
+  lastRun DateTime?
+  nextRun DateTime?
+
+  // Relations
+  incidents   Incident[]
+  latencyLogs LatencyLog[] // For charts in Overview
+  uptimeLogs  UptimeLog[] // For uptime bars
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Stores historical performance data for the Charts
+model LatencyLog {
+  id        String   @id @default(cuid())
+  latency   Int // in ms
+  timestamp DateTime @default(now())
+
+  monitorId String
+  monitor   Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+
+  @@index([monitorId, timestamp])
+}
+
+// Stores uptime checks (success/failure)
+model UptimeLog {
+  id        String   @id @default(cuid())
+  isUp      Boolean
+  timestamp DateTime @default(now())
+
+  monitorId String
+  monitor   Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+}
+
+// -----------------------------------------------------------------------------
+// INCIDENT MANAGEMENT (AI Features)
+// Support for src/lib/gemini.ts
+// -----------------------------------------------------------------------------
+
+model Incident {
+  id       String         @id @default(cuid())
+  status   IncidentStatus @default(OPEN)
+  severity Severity       @default(HIGH)
+
+  startedAt  DateTime  @default(now())
+  resolvedAt DateTime?
+
+  // AI Generated Content
+  rootCause  String? @db.Text
+  postMortem String? @db.Text // The PDF/Markdown report content
+
+  monitorId String
+  monitor   Monitor @relation(fields: [monitorId], references: [id])
+}
+
+// -----------------------------------------------------------------------------
+// BILLING & SUBSCRIPTION
+// Support for src/app/(dashboard)/billing/page.tsx
+// -----------------------------------------------------------------------------
+
+model Subscription {
+  id String @id @default(cuid())
+
+  plan   PlanType @default(HOBBY)
+  status String // e.g., 'active', 'past_due'
+
+  // Payment Provider Details
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+
+  // Usage Limits tracking
+  currentMonitorCount Int @default(0)
+  currentApiUsage     Int @default(0)
+
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+}
+
+model Invoice {
+  id     String   @id @default(cuid())
+  amount Decimal
+  status String // 'Paid', 'Pending'
+  date   DateTime
+  pdfUrl String?
+
+  // In a real app, this might link to Subscription or User
+  userId String
+}
+
+// -----------------------------------------------------------------------------
+// SETTINGS & CONFIGURATION
+// Support for src/app/(dashboard)/settings/page.tsx
+// -----------------------------------------------------------------------------
+
+model Settings {
+  id String @id @default(cuid())
+
+  // Preferences
+  theme String @default("system")
+
+  // Notification Toggles
+  emailAlerts        Boolean @default(true)
+  slackNotifications Boolean @default(true)
+  weeklyReport       Boolean @default(false)
+  marketingEmails    Boolean @default(false)
+}
+
+model Integration {
+  id        String          @id @default(cuid())
+  type      IntegrationType // DATADOG, SLACK
+  config    Json? // Store API keys/webhooks (encrypted ideally)
+  isEnabled Boolean         @default(false)
+}
+
+// -----------------------------------------------------------------------------
+// ENUMS
+// -----------------------------------------------------------------------------
+
+enum BrainType {
+  WEBSITE
+  API
+  DOC
+  LOG
+  STATUS_PAGE
+}
+
+enum MonitorType {
+  UPTIME
+  PERFORMANCE
+  REPORT
+}
+
+enum MonitorStatus {
+  ACTIVE
+  PAUSED
+  FAILED
+}
+
+enum IncidentStatus {
+  OPEN
+  RESOLVED
+  INVESTIGATING
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum PlanType {
+  HOBBY
+  PRO
+  ENTERPRISE
+}
+
+enum IntegrationType {
+  SLACK
+  DATADOG
+}
