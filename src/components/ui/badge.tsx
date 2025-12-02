@@ -1,0 +1,41 @@
+import * as React from 'react';
+
+import { cn } from '@/lib/utils';
+
+export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?:
+    | 'default'
+    | 'secondary'
+    | 'outline'
+    | 'success'
+    | 'warning'
+    | 'danger';
+}
+
+function Badge({ className, variant = 'default', ...props }: BadgeProps) {
+  const variants = {
+    default:
+      'border-transparent bg-stone-900 text-stone-50 hover:bg-stone-900/80 dark:bg-stone-50 dark:text-stone-900 dark:hover:bg-stone-50/80',
+    secondary:
+      'border-transparent bg-stone-100 text-stone-900 hover:bg-stone-100/80 dark:bg-zinc-800 dark:text-stone-50 dark:hover:bg-zinc-800/80',
+    outline: 'text-stone-950 dark:text-stone-50',
+    success:
+      'border-transparent bg-green-500/15 text-green-700 dark:text-green-400',
+    warning:
+      'border-transparent bg-yellow-500/15 text-yellow-700 dark:text-yellow-400',
+    danger: 'border-transparent bg-red-500/15 text-red-700 dark:text-red-400',
+  };
+
+  return (
+    <div
+      className={cn(
+        'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:ring-2 focus:ring-stone-950 focus:ring-offset-2 focus:outline-none dark:focus:ring-stone-300',
+        variants[variant],
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export { Badge };
