@@ -11,26 +11,36 @@ import {
   CreditCard,
   LayoutDashboard,
   ListTodo,
-  LogOut,
   PenTool,
   Settings,
 } from 'lucide-react';
 
 import SidebarItem from '../sidebar-item';
+import SignOutButton from './sign-out-button';
 import UserPill from './user-pill';
 
 const items = [
-  { label: 'Overview', href: '/overview', icon: LayoutDashboard },
-  { label: 'Queue', href: '/queue', icon: ListTodo },
-  { label: 'Brain', href: '/brain', icon: Brain },
-  { label: 'Playground', href: '/playground', icon: Bot },
-  { label: 'Composer', href: '/composer', icon: PenTool },
+  { label: 'Overview', href: '/dashboard/overview', icon: LayoutDashboard },
+  { label: 'Queue', href: '/dashboard/queue', icon: ListTodo },
+  { label: 'Brain', href: '/dashboard/brain', icon: Brain },
+  { label: 'Playground', href: '/dashboard/playground', icon: Bot },
+  { label: 'Composer', href: '/dashboard/composer', icon: PenTool },
 
   { divider: true },
 
-  { label: 'Docs', href: '/docs', icon: BookOpen, secondary: true },
-  { label: 'Billing', href: '/billing', icon: CreditCard, secondary: true },
-  { label: 'Settings', href: '/settings', icon: Settings, secondary: true },
+  { label: 'Docs', href: '/dashboard/docs', icon: BookOpen, secondary: true },
+  {
+    label: 'Billing',
+    href: '/dashboard/billing',
+    icon: CreditCard,
+    secondary: true,
+  },
+  {
+    label: 'Settings',
+    href: '/dashboard/settings',
+    icon: Settings,
+    secondary: true,
+  },
 ];
 
 export default function Sidebar() {
@@ -39,7 +49,7 @@ export default function Sidebar() {
   return (
     <div className="flex w-64 shrink-0 flex-col border-r border-stone-200 bg-stone-50 dark:border-zinc-800 dark:bg-zinc-950">
       {/* Logo */}
-      <Link href="/dashboard">
+      <Link href="/dashboard/overview">
         <div className="flex items-center gap-3 p-6">
           <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-stone-900 dark:bg-stone-100">
             <div className="h-3 w-3 rounded-[1px] bg-white dark:bg-zinc-900"></div>
@@ -72,10 +82,7 @@ export default function Sidebar() {
       <UserPill />
 
       {/* Logout */}
-      <button className="mx-4 mb-4 flex cursor-pointer items-center gap-3 px-4 py-2 text-sm text-stone-500 transition-colors hover:text-red-600 dark:text-stone-400 dark:hover:text-red-400">
-        <LogOut size={18} />
-        Log Out
-      </button>
+      <SignOutButton />
     </div>
   );
 }

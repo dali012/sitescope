@@ -33,8 +33,8 @@ const Navbar = () => {
         >
           Docs
         </Link>
-        <Link href="/login">
-          <Button>Log In</Button>
+        <Link href="/sign-in">
+          <Button>Sign In</Button>
         </Link>
         <ThemeToggle />
       </div>

@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import HeroDashboardPreview from '@/components/landing/hero-dashboard-preview';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,9 +23,11 @@ const Hero = () => {
           incident reports automatically. Stop firefighting, start fixing.
         </p>
         <div className="animate-slide-up-fade flex justify-center gap-4 delay-200">
-          <Button size="lg" className="shadow-lg hover:scale-105">
-            Start Monitoring Free
-          </Button>
+          <Link href="/sign-in">
+            <Button size="lg" className="shadow-lg hover:scale-105">
+              Start Monitoring Free
+            </Button>
+          </Link>
           <Button
             variant="outline"
             size="lg"
